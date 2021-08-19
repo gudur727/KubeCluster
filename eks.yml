@@ -24,8 +24,6 @@ Mappings:
       Subnet1: 10.0.0.0/18   
       Subnet2: 10.0.64.0/18  
 
-  # IDs of the "EKS-optimised AMIs" for the worker nodes:
-  # https://docs.aws.amazon.com/eks/latest/userguide/eks-optimized-ami.html
   EksAmiIds:
     us-east-1:
       Standard: ami-0a0b913ef3249b655
@@ -37,10 +35,6 @@ Mappings:
       Standard: ami-00c3b2d35bddd4f5c
 
 Resources:
-
-  #============================================================================#
-  # VPC
-  #============================================================================#
 
   VPC:
     Type: AWS::EC2::VPC
@@ -99,8 +93,6 @@ Resources:
 
   InternetGatewayRoute:
     Type: AWS::EC2::Route
-    # DependsOn is mandatory because route targets InternetGateway
-    # See here: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-dependson.html#gatewayattachment
     DependsOn: VPCGatewayAttachment
     Properties:
       RouteTableId: !Ref RouteTable
@@ -118,10 +110,6 @@ Resources:
     Properties:
       SubnetId: !Ref Subnet2
       RouteTableId: !Ref RouteTable
-
-  #============================================================================#
-  # Control plane
-  #============================================================================#
 
   ControlPlane:
     Type: AWS::EKS::Cluster
@@ -150,10 +138,6 @@ Resources:
       ManagedPolicyArns: 
         - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
         - arn:aws:iam::aws:policy/AmazonEKSServicePolicy
-
-  #============================================================================#
-  # Control plane security group
-  #============================================================================#
 
   ControlPlaneSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -195,11 +179,6 @@ Resources:
       FromPort: 443
       ToPort: 443
 
-  #============================================================================#
-  # Worker nodes security group
-  # Note: default egress rule (allow all traffic to all destinations) applies
-  #============================================================================#
-
   WorkerNodesSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -239,10 +218,6 @@ Resources:
       FromPort: 443
       ToPort: 443
 
-  #============================================================================#
-  # Worker nodes (auto-scaling group)
-  #============================================================================#
-
   WorkerNodesAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     UpdatePolicy:
@@ -260,14 +235,12 @@ Resources:
         - Key: Name
           Value: !Sub "${AWS::StackName}-WorkerNodesAutoScalingGroup"
           PropagateAtLaunch: true
-        # Without this tag, worker nodes are unable to join the cluster:
         - Key: !Sub "kubernetes.io/cluster/${ControlPlane}"
           Value: "owned"
           PropagateAtLaunch: true
 
   WorkerNodesLaunchConfiguration:
     Type: AWS::AutoScaling::LaunchConfiguration
-    # Wait until cluster is ready before launching worker nodes
     DependsOn: ControlPlane
     Properties:
       AssociatePublicIpAddress: true
@@ -316,7 +289,5 @@ Resources:
 Outputs:
 
   WorkerNodesRoleArn:
-    # Needed for the last step "enable worker nodes to join the cluster":
-    # https://docs.aws.amazon.com/eks/latest/userguide/getting-started.html#eks-create-cluster
     Description: ARN of the worker nodes role
     Value: !GetAtt WorkerNodesRole.Arn
