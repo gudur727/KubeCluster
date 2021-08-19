@@ -1,4 +1,3 @@
-AWSTemplateFormatVersion: '2010-09-09'
 Description: EKS cluster using a VPC with two public subnets
 
 Parameters:
@@ -21,9 +20,9 @@ Mappings:
 
   VpcIpRanges:
     Option1:
-      VPC: 10.0.0.0/16       # 00001010.00000000.xxxxxxxx.xxxxxxxx
-      Subnet1: 10.0.0.0/18   # 00001010.00000000.00xxxxxx.xxxxxxxx
-      Subnet2: 10.0.64.0/18  # 00001010.00000000.01xxxxxx.xxxxxxxx
+      VPC: 10.0.0.0/16       
+      Subnet1: 10.0.0.0/18   
+      Subnet2: 10.0.64.0/18  
 
   # IDs of the "EKS-optimised AMIs" for the worker nodes:
   # https://docs.aws.amazon.com/eks/latest/userguide/eks-optimized-ami.html
